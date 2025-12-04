@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+echo " Starting Rolling Update for Messaging App..."
+
+# Step 1: Apply updated deployment (image v2.0)
+kubectl apply -f blue_deployment.yaml
+
+# Step 2: Monitor rollout status
+echo " Monitoring rollout status..."
+kubectl rollout status deployment/messaging-app-blue
+
+# Step 3: Verify new pods are running
+echo " Checking new pods..."
+kubectl get pods -l app=messaging-app -o wide
+
+# Step 4: Continuous downtime check (curl loop)
+echo " Testing app availability during rollout..."
+SERVICE_IP=$(minikube service messaging-app-service --url)
+
+if [ -z "$SERVICE_IP" ]; then
+  echo " Could not resolve service URL. Make sure the service exists."
+  exit 1
+fi
+
+echo "Pinging $SERVICE_IP every 2 seconds for 30 seconds..."
+for i in {1..15}; do
+  STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_IP")
+  echo "[$(date +"%T")] HTTP Status: $STATUS"
+  sleep 2
+done
+
+# Step 5: Verify rollout completion
+echo " Rollout complete. Current deployments:"
+kubectl get deployments
+
+echo " Current pods and their images:"
+kubectl get pods -l app=messaging-app -o jsonpath='{range .items[*]}{.metadata.name}{" - "}{.spec.containers[0].image}{"\n"}{end}'
+
+echo " Rolling update successful and verified!"

@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+
+echo "🔹 Scaling Django Messaging App Deployment to 3 replicas..."
+kubectl scale deployment messaging-app-deployment --replicas=3
+
+echo "Deployment scaled successfully!"
+echo
+
+# Wait a few seconds for pods to start
+sleep 10
+
+echo "🔹 Verifying running pods..."
+kubectl get pods -l app=messaging-app
+
+echo
+echo "🔹 Checking resource usage of all pods..."
+kubectl top pods || echo "Metrics Server not installed. Run: kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
+
+echo
+echo "🔹 Performing load testing using wrk..."
+echo "Ensure wrk is installed locally or in a test pod."
+
+# Example load test (replace <ClusterIP> with actual cluster IP or NodePort if exposed)
+SERVICE_IP=$(kubectl get svc messaging-app-service -o jsonpath='{.spec.clusterIP}')
+echo "Testing against service IP: $SERVICE_IP"
+
+# Run wrk for 30 seconds, 50 concurrent connections, hitting Django default port (8000)
+wrk -t4 -c50 -d30s http://$SERVICE_IP:8000/ || echo "wrk test skipped (ensure wrk is installed)."
+
+echo
+echo "Kubernetes scaling and load test completed successfully!"

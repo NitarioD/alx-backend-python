@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_CREDENTIALS_ID = 'github-creds'
+        REPO_URL = 'https://github.com/Ken-Obieze/alx-backend-python.git'
+        APP_DIR = 'messaging_app'
+        PYTHON = 'python3'
+    }
+
+    stages {
+        stage('Checkout Source') {
+            steps {
+                echo "Pulling latest source code from GitHub..."
+                git branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}", url: "${REPO_URL}"
+            }
+        }
+
+        stage('Set Up Environment') {
+            steps {
+                echo "Setting up Python environment..."
+                sh 'pip3 install -r messaging_app/requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                echo "Running tests with pytest..."
+                sh 'pytest messaging_app/tests/ --maxfail=1 --disable-warnings -q --html=report.html --self-contained-html'
+            }
+        }
+
+        stage('Publish Test Report') {
+            steps {
+                echo "Archiving test report..."
+                publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true,
+                    reportDir: '.', reportFiles: 'report.html', reportName: 'Pytest Report'])
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check test report for details.'
+        }
+    }
+}
