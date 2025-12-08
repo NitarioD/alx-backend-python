@@ -1,0 +1,6 @@
+2025-09-21 14:30:05 - User: anonymous - Path: /api/auth/login/
+2025-09-21 14:30:15 - User: admin - Path: /api/conversations/
+2025-09-21 14:30:22 - User: admin - Path: /api/messages/1/
+2025-09-21 14:30:45 - User: john_doe - Path: /api/messages/send/
+2025-09-21 14:31:01 - User: jane_doe - Path: /api/conversations/2/
+2025-09-21 14:31:15 - User: john_doe - Path: /api/messages/2/delete/
